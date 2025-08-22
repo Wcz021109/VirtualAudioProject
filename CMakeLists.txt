@@ -14,6 +14,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # 项目配置选项
 option(BUILD_TESTS "Build Tests" ON)
+option(BUILD_EXAMPLES "Build Examples" OFF)
 
 # 设置输出目录
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -50,6 +51,8 @@ if(WIN32)
     # 添加Windows版本定义
     add_definitions(-D_WIN32_WINNT=0x0A00) # Windows10
     add_definitions(-DNTDDI_VERSION=0x0A000000) # Windows10
+
+    add_definitions(-DUNICODE -D_UNICODE)
 
     # 链接Windows库
     target_link_libraries(VirtualAudioManager
