@@ -1,6 +1,7 @@
 # 设备管理单元CMake配置文件
 # 设备管理库
 add_library(DeviceManagement STATIC
+    include/AudioDeviceManager.h
     src/AudioDeviceManager.cpp
 )
 
