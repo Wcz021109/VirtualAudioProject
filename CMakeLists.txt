@@ -62,3 +62,10 @@ if(WIN32)
             ole32
     )
 endif()
+
+# WDK自定义目标
+add_custom_target(drivers
+        COMMAND ${CMAKE_SOURCE_DIR}/tools/build/build_drivers.bat
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/drivers
+        COMMENT "Building drivers..."
+)
