@@ -1,4 +1,4 @@
-//  ¹¤¾ßÀàÊµÏÖÎÄ¼ş
+//  å·¥å…·ç±»å®ç°æ–‡ä»¶
 #include "Logger.h"
 #include <chrono>
 #include <iomanip>
@@ -56,23 +56,23 @@ void Logger::Error(const std::string& message) {
 void Logger::Log(LogLevel level, const std::string& message) {
 	std::lock_guard<std::mutex> lock(logMutex);
 
-	//  »ñÈ¡µ±Ç°Ê±¼ä
+	//  è·å–å½“å‰æ—¶é—´
 	auto now = std::chrono::system_clock::now();
 	auto in_time_t = std::chrono::system_clock::to_time_t(now);
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-	//  ¸ñÊ½»¯µ±Ç°Ê±¼ä
+	//  æ ¼å¼åŒ–å½“å‰æ—¶é—´
 	std::stringstream oss;
 	oss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S")
 		<< "." << std::setfill('0') << std::setw(3) << ms.count();
 
-	//  ¹¹½¨ÈÕÖ¾ĞÅÏ¢
+	//  æ„å»ºæ—¥å¿—ä¿¡æ¯
 	std::string logMessage = "[" + oss.str() + "] [" + LevelToString(level) + "] " + message;
 
-	//  Êä³öµ½¿ØÖÆÌ¨
+	//  è¾“å‡ºåˆ°æ§åˆ¶å°
 	std::cout << logMessage << std::endl;
 
-	//  Êä³öµ½ÈÕÖ¾ÎÄ¼ş£¨Èç¹ûÒÑÉèÖÃ£©
+	//  è¾“å‡ºåˆ°æ—¥å¿—æ–‡ä»¶ï¼ˆå¦‚æœå·²è®¾ç½®ï¼‰
 	if (logFile.is_open()) {
 		logFile << logMessage << std::endl;
 	}

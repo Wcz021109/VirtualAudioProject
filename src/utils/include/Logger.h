@@ -1,4 +1,5 @@
-//  ¹¤¾ßÀàÍ·ÎÄ¼ş
+
+//  å·¥å…·ç±»å¤´æ–‡ä»¶
 #pragma once
 
 #include <string>
@@ -6,7 +7,7 @@
 #include <fstream>
 #include <mutex>
 
-//  ÈÕÖ¾¼¶±ğÃ¶¾Ù
+//  æ—¥å¿—çº§åˆ«æšä¸¾
 enum class LogLevel {
 	DEBUG,
 	INFO,
@@ -14,7 +15,7 @@ enum class LogLevel {
 	ERROR
 };
 
-//  ÈÕÖ¾ÀàÉùÃ÷
+//  æ—¥å¿—ç±»å£°æ˜
 class Logger {
 public:
 	static Logger& GetInstance();
