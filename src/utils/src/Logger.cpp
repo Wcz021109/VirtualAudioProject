@@ -8,7 +8,7 @@ Logger&Logger::GetInstance() {
 	return instance;
 }
 
-Logger:Logger() : currentLevel(LogLevel::INFO) {}
+Logger::Logger() : currentLevel(LogLevel::INFO) {}
 
 Logger::~Logger() {
 	if (logFile.is_open()) {
@@ -58,10 +58,10 @@ void Logger::Log(LogLevel level, const std::string& message) {
 
 	//  获取当前时间
 	auto now = std::chrono::system_clock::now();
-	auto in_time_t = std::chrono::system_clock::to_time_t(now);
+	auto time = std::chrono::system_clock::to_time_t(now);
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-	//  格式化当前时间
+	//  格式化时间
 	std::stringstream oss;
 	oss << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S")
 		<< "." << std::setfill('0') << std::setw(3) << ms.count();

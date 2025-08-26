@@ -30,7 +30,7 @@ add_subdirectory(src/device_management)
 add_subdirectory(src/utils)
 
 # 添加测试
-if(BUIDL_TESTS)
+if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(src/tests)
 endif()

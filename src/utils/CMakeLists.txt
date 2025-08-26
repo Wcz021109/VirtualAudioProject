@@ -1,7 +1,6 @@
 # 工具库的CMake配置文件
 # 工具库
 add_library(AudioUtils STATIC
-        include/Logger.h
         src/Logger.cpp
 )
 

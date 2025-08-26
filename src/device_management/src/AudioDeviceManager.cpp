@@ -8,33 +8,29 @@
 //  设备通知客户端
 class CMMNotificationClient : public IMMNotificationClient {
 public:
-	CMMNotificationClient(AudioDeviceManager* pManager) :
-		pManager(pManager), result(1) {
-	}
+	CMMNotificationClient(AudioDeviceManager *pManager) : pManager(pManager), refCount(1) {}
 
 	//  IUnknown方法
 	ULONG STDMETHODCALLTYPE AddRef() override {
-		return InterlockedIncrement(&result);
-	}//IUnknown.Addref
+		return InterlockedIncrement(&refCount);
+	} //IUnknown.AddRef
 
 	ULONG STDMETHODCALLTYPE Release() override {
-		ULONG ulRef = InterlockedDecrement(&refcount);
+		ULONG ulRef = InterlockedDecrement(&refCount);
 		if (ulRef == 0) {
 			delete this;
 		}
 		return ulRef;
-	}//IUnknown.Release
+	} //IUnknown.Release
 
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvInterface) override {
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvInterface) override {
 		if (riid == IID_IUnknown) {
 			AddRef();
-			*ppvInterface = (IUnknown*)this;
-		}
-		else if (riid == __uuidof(IMMNotificationClient)) {
+			*ppvInterface = (IUnknown *) this;
+		} else if (riid == __uuidof(IMMNotificationClient)) {
 			AddRef();
-			*ppvInterface = (IMMNotificationClient*)this;
-		}
-		else {
+			*ppvInterface = (IMMNotificationClient *) this;
+		} else {
 			*ppvInterface = NULL;
 			return E_NOINTERFACE;
 		}
@@ -43,82 +39,87 @@ public:
 
 	//  IMMNotificationClient方法
 	HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) override {
-	std:wcout << L"Device state changed: " << pwstrDeviceId << std::endl;
+	std:
+		std::wcout << L"Device state changed: " << pwstrDeviceId << std::endl;
 		if (pManager) {
 			pManager->PopulateDeviceLists();
 		}
 		return S_OK;
-	}//DeviceStateChange
+	} //DeviceStateChange
 
 	HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) override {
-	std:wcout << L"Device Added: " << pwstrDeviceId << std::endl;
+	std:
+		std::wcout << L"Device Added: " << pwstrDeviceId << std::endl;
 		if (pManager) {
 			pManager->PopulateDeviceLists();
 		}
 		return S_OK;
-	}//DeviceAdded
+	} //DeviceAdded
 
 	HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId) override {
-	std:wcout << L"Device Removed: " << pwstrDeviceId << std::endl;
+	std:
+		std::wcout << L"Device Removed: " << pwstrDeviceId << std::endl;
 		if (pManager) {
 			pManager->PopulateDeviceLists();
 		}
-	}//DeviceRemoved
+	} //DeviceRemoved
 
 	HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) override {
-	std:wcout << L"Default Device Changed: " << (flow == eCapture ? L"Input" : L"Output") << std::endl;
+	std:
+		std::wcout << L"Default Device Changed: " << (flow == eCapture ? L"Input" : L"Output") << std::endl;
 		if (pManager) {
 			pManager->PopulateDeviceLists();
 		}
-	}//DefaultDeviceChanged
+	} //DefaultDeviceChanged
 
 	HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) override {
 		return S_OK;
 	}
 
 private:
-	AudioDeviceManager* pManager;
+	AudioDeviceManager *pManager;
 	LONG refCount;
-};//IMMNotificationClient
+}; //IMMNotificationClient
 
 //  设备管理器
 AudioDeviceManager::AudioDeviceManager()
-	: pEnumber(nullptr), pNotificationClient(nullptr) {
-}
+	: pEnumerator(nullptr), pNotificationClient(nullptr) {}
 
 AudioDeviceManager::~AudioDeviceManager() {
-	UnregisterDeviceNotification();
+	UnregisterDeviceNotifications();
 
-	if (pEnumeration) {
-		pEnumeration->Release();
-		pEnumeration = nullptr;
+	if (pEnumerator) {
+		pEnumerator->Release();
+		pEnumerator = nullptr;
 	}
 }
 
 bool AudioDeviceManager::Initialize() {
-	HRESULT hr = CoInitialize(nullptr, COINIT_APARTMENTTHREADED);
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 	if (FAILED(hr)) {
-	std:wcerr << L"COM initialize failed: " << _com_error(hr) << std::endl;
+	std:
+		std::wcerr << L"COM initialize failed: " << _com_error(hr).ErrorMessage() << std::endl;
 		return false;
 	};
 
 	hr = CoCreateInstance(
-		_uuidof(MMDeviceEnumerator),
+		__uuidof(MMDeviceEnumerator),
 		nullptr,
 		CLSCTX_ALL,
-		_uuid0f(IMMDeviceEnumerator),
-		(void**)&pEnumerator
+		__uuidof(IMMDeviceEnumerator),
+		(void **) &pEnumerator
 	);
 
 	if (FAILED(hr)) {
-	std:wcerr << L"Failed to create device enumerator: " << _com_error(hr).ErrorMessage() << std::endl;
+	std:
+		std::wcerr << L"Failed to create device enumerator: " << _com_error(hr).ErrorMessage() << std::endl;
 		CoUninitialize();
 		return false;
 	}
 
 	isInitialized = true;
 	return true;
-}//Initallize
+} //Initialize
 
 bool AudioDeviceManager::PopulateDeviceLists() {
 	if (!isInitialized) {
@@ -140,41 +141,39 @@ bool AudioDeviceManager::PopulateDeviceLists() {
 
 	//  枚举输出设备
 	std::vector<AudioDevice> outputDevices;
-	if (FAILED(EnumerateDevices(eOutput, outputDevices))) {
+	if (FAILED(EnumerateDevices(eRender, outputDevices))) {
 		return false;
 	}
 
 	//  分类设备
-	for (const auto& device : inputDevices) {
+	for (const auto &device: inputDevices) {
 		if (device.type == DeviceType::Physical) {
 			physicalInputs.push_back(device);
-		}
-		else {
+		} else {
 			virtualInputs.push_back(device);
 		}
 	}
 
-	for (const auto& device : outputDevices) {
+	for (const auto &device: outputDevices) {
 		if (device.type == DeviceType::Physical) {
 			physicalOutputs.push_back(device);
-		}
-		else {
+		} else {
 			virtualOutputs.push_back(device);
 		}
 	}
 
 	return true;
-}//PopulateDeviceLists
+} //PopulateDeviceLists
 
-HRESULT AudioDeviceManager::EnumerateDevices(EDataFlow DataFlow, std::vector<AudioDevice>& devices) {
+HRESULT AudioDeviceManager::EnumerateDevices(EDataFlow dataFlow, std::vector<AudioDevice> &devices) {
 	if (!pEnumerator) {
 		return E_FAIL;
 	}
 
-	IMMDeviceEnumerator* pCollection = nullptr;
-	HResult hr = pEnumerator->EnumAudioEndpoints(dataFlow, DEVICE_STATE_ACTIVE, &pCollection);
+	IMMDeviceCollection* pCollection = nullptr;
+	HRESULT hr = pEnumerator->EnumAudioEndpoints(dataFlow, DEVICE_STATE_ACTIVE, &pCollection);
 	if (FAILED(hr)) {
-	std:wcerr << L"Failed to enumerate audio endpoints: " << _com_error(hr).ErrorMessage() << std::endl;
+		std::wcerr << L"Failed to enumerate audio endpoints: " << _com_error(hr).ErrorMessage() << std::endl;
 		return hr;
 	}
 
@@ -186,7 +185,7 @@ HRESULT AudioDeviceManager::EnumerateDevices(EDataFlow DataFlow, std::vector<Aud
 	}
 
 	for (UINT i = 0; i < count; i++) {
-		IMMDevice* pDevice = nullptr;
+		IMMDevice *pDevice = nullptr;
 		hr = pCollection->Item(i, &pDevice);
 		if (SUCCEEDED(hr)) {
 			AudioDevice deviceInfo;
@@ -200,7 +199,7 @@ HRESULT AudioDeviceManager::EnumerateDevices(EDataFlow DataFlow, std::vector<Aud
 			}
 
 			//  获取设备属性存储
-			IPropertyStore* pProps = nullptr;
+			IPropertyStore *pProps = nullptr;
 			hr = pDevice->OpenPropertyStore(STGM_READ, &pProps);
 			if (SUCCEEDED(hr)) {
 				//  获取设备友好名称
@@ -213,29 +212,28 @@ HRESULT AudioDeviceManager::EnumerateDevices(EDataFlow DataFlow, std::vector<Aud
 				PropVariantClear(&varName);
 
 				//  获取设备枚举器名称
-				PROPVARIANT varName;
+				PROPVARIANT varEnum;
 				PropVariantInit(&varName);
-				hr = pProps->GetValue(PKEY_Device_EnmuneratorName, &varEnum);
+				hr = pProps->GetValue(PKEY_Device_EnumeratorName, &varEnum);
 				if (SUCCEEDED(hr) && varEnum.vt == VT_LPWSTR) {
 					deviceInfo.enumerator = varEnum.pwszVal;
 				}
 				PropVariantClear(&varEnum);
 
 				//  分类设备
-				deviceinfo.type = ClassifyDevice(pDevice, pProps);
+				deviceInfo.type = ClassifyDevice(pDevice, pProps);
 
 				//  设置设备方向
-				deviceInfo.direction = (dataflow == eCapture) ? DeviceDirection::Input : DeviceDirection::Output;
+				deviceInfo.direction = (dataFlow == eCapture) ? DeviceDirection::Input : DeviceDirection::Output;
 
 				// 检查是否为默认设备
-				deviceInfo.isDefault = CheckIfDefaultDevice(pDevice, DataFlow);
+				deviceInfo.isDefault = CheckIfDefaultDevice(pDevice, dataFlow);
 
 				pProps->Release();
-
 			}
 
 			devices.push_back(deviceInfo);
-			pDevice->Release()
+			pDevice->Release();
 		}
 	}
 
@@ -243,277 +241,7 @@ HRESULT AudioDeviceManager::EnumerateDevices(EDataFlow DataFlow, std::vector<Aud
 	return S_OK;
 }
 
-DeviceType AudioDeviceManager::ClassifyDevice(IMMDevice* pDevice, IPropertyStore* pProps) {
-	//  获取设备接口友好名称（更详细）
-	PROPVARIANT varInterfaceName;
-	PropVariantInit(&varInterfaceName);
-	HRESULT hr = pProps->GetValue(PKEY_Device_Interface_FriendlyName, &varInterfaceName);
-
-	std::wstring interfaceName;
-	if (SUCCEEDED(HR) && varInterfaceName.vt == VT_LPWSTR) {
-		interfaceName = VarInterfaceName.pwszVal;
-	}
-
-	//  获取设备枚举器名称
-	PROPVARIANT varEnum;
-
-	//  转换为小写以便比较
-
-	//  检查已知的虚拟设备枚举器
-
-	//  检查已知的物理设备枚举器
-
-	//  检查接口名称中的关键字
-
-	//  默认情况下假设为物理设备  
-}
-
-//  设备管理实现文件
-#include "AudioDeviceManager.h"
-#include <iostream>
-#include <comdef.h>
-
-#pragma comment(lib, "Ole32.lib")
-
-//  设备通知客户端
-class CMMNotificationClient : public IMMNotificationClient {
-public:
-	CMMNotificationClient(AudioDeviceManager* pManager) :
-		pManager(pManager), result(1) {
-	}
-
-	//  IUnknown方法
-	ULONG STDMETHODCALLTYPE AddRef() override {
-		return InterlockedIncrement(&result);
-	}//IUnknown.Addref
-
-	ULONG STDMETHODCALLTYPE Release() override {
-		ULONG ulRef = InterlockedDecrement(&refcount);
-		if (ulRef == 0) {
-			delete this;
-		}
-		return ulRef;
-	}//IUnknown.Release
-
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvInterface) override {
-		if (riid == IID_IUnknown) {
-			AddRef();
-			*ppvInterface = (IUnknown*)this;
-		}
-		else if (riid == __uuidof(IMMNotificationClient)) {
-			AddRef();
-			*ppvInterface = (IMMNotificationClient*)this;
-		}
-		else {
-			*ppvInterface = NULL;
-			return E_NOINTERFACE;
-		}
-		return S_OK;
-	}
-
-	//  IMMNotificationClient方法
-	HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) override {
-	std:wcout << L"Device state changed: " << pwstrDeviceId << std::endl;
-		if (pManager) {
-			pManager->PopulateDeviceLists();
-		}
-		return S_OK;
-	}//DeviceStateChange
-
-	HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) override {
-	std:wcout << L"Device Added: " << pwstrDeviceId << std::endl;
-		if (pManager) {
-			pManager->PopulateDeviceLists();
-		}
-		return S_OK;
-	}//DeviceAdded
-
-	HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId) override {
-	std:wcout << L"Device Removed: " << pwstrDeviceId << std::endl;
-		if (pManager) {
-			pManager->PopulateDeviceLists();
-		}
-	}//DeviceRemoved
-
-	HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) override {
-	std:wcout << L"Default Device Changed: " << (flow == eCapture ? L"Input" : L"Output") << std::endl;
-		if (pManager) {
-			pManager->PopulateDeviceLists();
-		}
-	}//DefaultDeviceChanged
-
-	HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) override {
-		return S_OK;
-	}
-
-private:
-	AudioDeviceManager* pManager;
-	LONG refCount;
-};//IMMNotificationClient
-
-//  设备管理器
-AudioDeviceManager::AudioDeviceManager()
-	: pEnumber(nullptr), pNotificationClient(nullptr) {
-}
-
-AudioDeviceManager::~AudioDeviceManager() {
-	UnregisterDeviceNotification();
-
-	if (pEnumeration) {
-		pEnumeration->Release();
-		pEnumeration = nullptr;
-	}
-}
-
-bool AudioDeviceManager::Initialize() {
-	HRESULT hr = CoInitialize(nullptr, COINIT_APARTMENTTHREADED);
-	if (FAILED(hr)) {
-	std:wcerr << L"COM initialize failed: " << _com_error(hr) << std::endl;
-		return false;
-	};
-
-	hr = CoCreateInstance(
-		_uuidof(MMDeviceEnumerator),
-		nullptr,
-		CLSCTX_ALL,
-		_uuid0f(IMMDeviceEnumerator),
-		(void**)&pEnumerator
-	);
-
-	if (FAILED(hr)) {
-	std:wcerr << L"Failed to create device enumerator: " << _com_error(hr).ErrorMessage() << std::endl;
-		CoUninitialize();
-		return false;
-	}
-
-	isInitialized = true;
-	return true;
-}//Initallize
-
-bool AudioDeviceManager::PopulateDeviceLists() {
-	if (!isInitialized) {
-		std::wcerr << L"AudioDeviceManager not initialized" << std::endl;
-		return false;
-	}
-
-	//  清空现有列表
-	physicalInputs.clear();
-	virtualInputs.clear();
-	physicalOutputs.clear();
-	virtualInputs.clear();
-
-	//  枚举输入设备
-	std::vector<AudioDevice> inputDevices;
-	if (FAILED(EnumerateDevices(eCapture, inputDevices))) {
-		return false;
-	}
-
-	//  枚举输出设备
-	std::vector<AudioDevice> outputDevices;
-	if (FAILED(EnumerateDevices(eOutput, outputDevices))) {
-		return false;
-	}
-
-	//  分类设备
-	for (const auto& device : inputDevices) {
-		if (device.type == DeviceType::Physical) {
-			physicalInputs.push_back(device);
-		}
-		else {
-			virtualInputs.push_back(device);
-		}
-	}
-
-	for (const auto& device : outputDevices) {
-		if (device.type == DeviceType::Physical) {
-			physicalOutputs.push_back(device);
-		}
-		else {
-			virtualOutputs.push_back(device);
-		}
-	}
-
-	return true;
-}//PopulateDeviceLists
-
-HRESULT AudioDeviceManager::EnumerateDevices(EDataFlow DataFlow, std::vector<AudioDevice>& devices) {
-	if (!pEnumerator) {
-		return E_FAIL;
-	}
-
-	IMMDeviceEnumerator* pCollection = nullptr;
-	HResult hr = pEnumerator->EnumAudioEndpoints(dataFlow, DEVICE_STATE_ACTIVE, &pCollection);
-	if (FAILED(hr)) {
-	std:wcerr << L"Failed to enumerate audio endpoints: " << _com_error(hr).ErrorMessage() << std::endl;
-		return hr;
-	}
-
-	UINT count;
-	hr = pCollection->GetCount(&count);
-	if (FAILED(hr)) {
-		pCollection->Release();
-		return hr;
-	}
-
-	for (UINT i = 0; i < count; i++) {
-		IMMDevice* pDevice = nullptr;
-		hr = pCollection->Item(i, &pDevice);
-		if (SUCCEEDED(hr)) {
-			AudioDevice deviceInfo;
-
-			//  获取设备ID
-			LPWSTR pwszID = nullptr;
-			pDevice->GetId(&pwszID);
-			if (pwszID) {
-				deviceInfo.id = pwszID;
-				CoTaskMemFree(pwszID);
-			}
-
-			//  获取设备属性存储
-			IPropertyStore* pProps = nullptr;
-			hr = pDevice->OpenPropertyStore(STGM_READ, &pProps);
-			if (SUCCEEDED(hr)) {
-				//  获取设备友好名称
-				PROPVARIANT varName;
-				PropVariantInit(&varName);
-				hr = pProps->GetValue(PKEY_Device_FriendlyName, &varName);
-				if (SUCCEEDED(hr) && varName.vt == VT_LPWSTR) {
-					deviceInfo.name = varName.pwszVal;
-				}
-				PropVariantClear(&varName);
-
-				//  获取设备枚举器名称
-				PROPVARIANT varName;
-				PropVariantInit(&varName);
-				hr = pProps->GetValue(PKEY_Device_EnmuneratorName, &varEnum);
-				if (SUCCEEDED(hr) && varEnum.vt == VT_LPWSTR) {
-					deviceInfo.enumerator = varEnum.pwszVal;
-				}
-				PropVariantClear(&varEnum);
-
-				//  分类设备
-				deviceinfo.type = ClassifyDevice(pDevice, pProps);
-
-				//  设置设备方向
-				deviceInfo.direction = (dataflow == eCapture) ? DeviceDirection::Input : DeviceDirection::Output;
-
-				// 检查是否为默认设备
-				deviceInfo.isDefault = CheckIfDefaultDevice(pDevice, DataFlow);
-
-				pProps->Release();
-
-			}
-
-			devices.push_back(deviceInfo);
-			pDevice->Release()
-		}
-	}
-
-	pCollection->Release();
-	return S_OK;
-}
-
-DeviceType AudioDeviceManager::ClassifyDevice(IMMDevice* pDevice, IPropertyStore* pProps) {
+DeviceType AudioDeviceManager::ClassifyDevice(IMMDevice *pDevice, IPropertyStore *pProps) {
 	//  获取设备接口友好名称（更详细）
 	PROPVARIANT varInterfaceName;
 	PropVariantInit(&varInterfaceName);
@@ -521,7 +249,7 @@ DeviceType AudioDeviceManager::ClassifyDevice(IMMDevice* pDevice, IPropertyStore
 
 	std::wstring interfaceName;
 	if (SUCCEEDED(hr) && varInterfaceName.vt == VT_LPWSTR) {
-		interfaceName = VarInterfaceName.pwszVal;
+		interfaceName = varInterfaceName.pwszVal;
 	}
 	PropVariantClear(&varInterfaceName);
 
@@ -531,7 +259,7 @@ DeviceType AudioDeviceManager::ClassifyDevice(IMMDevice* pDevice, IPropertyStore
 	hr = pProps->GetValue(PKEY_Device_EnumeratorName, &varEnum);
 
 	std::wstring enumeratorName;
-	if (SUCCEED(hr) && varEnum.vt == VT_LPWSTR) {
+	if (SUCCEEDED(hr) && varEnum.vt == VT_LPWSTR) {
 		enumeratorName = varEnum.pwszVal;
 	}
 	PropVariantClear(&varEnum);
@@ -547,7 +275,7 @@ DeviceType AudioDeviceManager::ClassifyDevice(IMMDevice* pDevice, IPropertyStore
 
 	//  检查已知的物理设备枚举器
 	if (enumeratorName == L"pci" ||
-		enumeratorName == l"usb" ||
+		enumeratorName == L"usb" ||
 		enumeratorName == L"hdaudio" ||
 		enumeratorName == L"hdmi" ||
 		enumeratorName == L"bluetooth" ||
@@ -569,10 +297,10 @@ DeviceType AudioDeviceManager::ClassifyDevice(IMMDevice* pDevice, IPropertyStore
 	return DeviceType::Physical;
 }
 
-bool AudioDeviceManager::CheckIfDefaultDevice(IMMDevice* pDevice, EDataFlow dataFlow) {
+bool AudioDeviceManager::CheckIfDefaultDevice(IMMDevice *pDevice, EDataFlow dataFlow) {
 	if (!pEnumerator || !pDevice) return false;
-	
-	IMMDevice* pDefaultDevice = nullptr;
+
+	IMMDevice *pDefaultDevice = nullptr;
 	HRESULT hr = pEnumerator->GetDefaultAudioEndpoint(dataFlow, eConsole, &pDefaultDevice);
 	if (FAILED(hr)) {
 		return false;
@@ -584,8 +312,8 @@ bool AudioDeviceManager::CheckIfDefaultDevice(IMMDevice* pDevice, EDataFlow data
 	LPWSTR pwszDeviceID = nullptr;
 	pDevice->GetId(&pwszDeviceID);
 
-	bool isDefault = (pwszDefaultID&&pwszDeviceID)&&wcscmp(pwszDefaultID&&pwszDeviceID) == 0);
-	
+	bool isDefault = ((pwszDefaultID && pwszDeviceID) && wcscmp(pwszDefaultID, pwszDeviceID) == 0);
+
 	if (pwszDefaultID) CoTaskMemFree(pwszDefaultID);
 	if (pwszDeviceID) CoTaskMemFree(pwszDeviceID);
 	pDefaultDevice->Release();
@@ -594,7 +322,7 @@ bool AudioDeviceManager::CheckIfDefaultDevice(IMMDevice* pDevice, EDataFlow data
 }
 
 bool AudioDeviceManager::RegisterDeviceNotifications() {
-	if (!pEnumerator || !isInstalled) {
+	if (!pEnumerator || !isInitialized) {
 		return false;
 	}
 
@@ -611,12 +339,12 @@ bool AudioDeviceManager::RegisterDeviceNotifications() {
 }
 
 bool AudioDeviceManager::UnregisterDeviceNotifications() {
-	if(!pEnumerator || !pNotificationClient) {
+	if (!pEnumerator || !pNotificationClient) {
 		return false;
 	}
 
-	HERSULT hr = pEnumerator->UnregisterEndpointNotificationCallback(pNotificationClient);
-	if (succeeded(hr)) {
+	HRESULT hr = pEnumerator->UnregisterEndpointNotificationCallback(pNotificationClient);
+	if (SUCCEEDED(hr)) {
 		pNotificationClient->Release();
 		pNotificationClient = nullptr;
 		return true;

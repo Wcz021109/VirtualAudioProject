@@ -18,7 +18,7 @@ enum class DeviceType {
 };//DeviceType
 
 //  设备方向枚举
-enum class DeviceType {
+enum class DeviceDirection {
     Input,
     Output
 };//DeviceType
@@ -31,7 +31,7 @@ struct AudioDevice {
     DeviceType type;
     DeviceDirection direction;
     bool isDefault = false;
-}//Audiodevice
+};//AudioDevice
 
 //  设备客户端前向声明
 class CMMNotificationClient;
@@ -46,7 +46,7 @@ public:
     bool Initialize();
 
     //  枚举指定类型的设备
-    bool PopulateDeviceList();
+    bool PopulateDeviceLists();
 
     //  获取设备列表
     const std::vector<AudioDevice>& GetPhysicalInputs() const { return physicalInputs; }
@@ -57,16 +57,16 @@ public:
     //  注册设备变化通知
     bool RegisterDeviceNotifications();
     bool UnregisterDeviceNotifications();
-//Public
+
 private:
     //  枚举指定类型的设备
     HRESULT EnumerateDevices(EDataFlow dataFlow, std::vector<AudioDevice>& devices);
 
     //  设备分类逻辑
-    DeviceType ClassifyDevice(IMMDevice* pdevice IPropertyStore* pProps);
+    DeviceType ClassifyDevice(IMMDevice* pDevice ,IPropertyStore* pProps);
 
     //  检查是否为默认设备
-    bool CheckDefaultDevice(IMMDevice* EDataFlow dataFlow);
+    bool CheckIfDefaultDevice(IMMDevice* pDevice, EDataFlow dataFlow);
 
     //  COM和MMDevice接口
     IMMDeviceEnumerator* pEnumerator;
@@ -81,5 +81,5 @@ private:
     CMMNotificationClient* pNotificationClient;
 
     //  初始化状态
-    bool registeredDeviceNotifications = false;
-}//AudioDeviceManager
+    bool isInitialized = false;
+};//AudioDeviceManager
