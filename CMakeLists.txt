@@ -20,10 +20,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# 包含目录
+# 包含第三方库目录
 include_directories(
-        ${CMAKE_SOURCE_DIR}/src/device_management/include
-        ${CMAKE_SOURCE_DIR}/src/utils/include
         ${CMAKE_SOURCE_DIR}/third_party
 )
 
@@ -41,7 +39,7 @@ endif()
 add_executable(VirtualAudioManager src/main.cpp)
 
 # 链接依赖库
-target_link_directories(VirtualAudioManager
+target_link_libraries(VirtualAudioManager
     PRIVATE
         DeviceManagement
         AudioUtils
