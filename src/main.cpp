@@ -5,8 +5,7 @@
 #include <iomanip>
 #include <vector>
 
-#include "device_management/include/AudioDeviceManager.h"
-#include "utils/include/Logger.h"
+
 
 void PrintDeviceList(const std::vector<AudioDevice> &devices, const std::wstring &title) {
 	std::wcout << L"\n===" << title << L"(" << devices.size() << L")===" << std::endl;
@@ -20,7 +19,7 @@ void PrintDeviceList(const std::vector<AudioDevice> &devices, const std::wstring
 }
 
 int main() {
-	Logger::GetInstance().SetLogLevel(LogLevel::INFO);
+	Logger::GetInstance().SetLogLevel(LogLevel::INFO_LEVEL);
 	Logger::GetInstance().Info("Starting Virtual Audio Manager...");
 
 	AudioDeviceManager manager;

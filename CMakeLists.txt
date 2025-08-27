@@ -1,5 +1,4 @@
 # 顶级CMakeList.txt文件
-
 cmake_minimum_required(VERSION 3.16)
 project(VirtualAudioManager
     VERSION 1.0.0
@@ -21,11 +20,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# 包含第三方库目录
-include_directories(${CMAKE_SOURCE_DIR}/third_party)
+# 包含目录
+include_directories(
+        ${CMAKE_SOURCE_DIR}/src/device_management/include
+        ${CMAKE_SOURCE_DIR}/src/utils/include
+        ${CMAKE_SOURCE_DIR}/third_party
+)
 
 # 添加子目录
-add_subdirectory(src/audio_core)
 add_subdirectory(src/device_management)
 add_subdirectory(src/utils)
 
@@ -41,7 +43,6 @@ add_executable(VirtualAudioManager src/main.cpp)
 # 链接依赖库
 target_link_directories(VirtualAudioManager
     PRIVATE
-        AudioCore
         DeviceManagement
         AudioUtils
 )

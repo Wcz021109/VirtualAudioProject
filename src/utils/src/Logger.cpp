@@ -8,7 +8,7 @@ Logger&Logger::GetInstance() {
 	return instance;
 }
 
-Logger::Logger() : currentLevel(LogLevel::INFO) {}
+Logger::Logger() : currentLevel(LogLevel::INFO_LEVEL) {}
 
 Logger::~Logger() {
 	if (logFile.is_open()) {
@@ -30,26 +30,26 @@ void Logger::SetLogLevel(LogLevel level) {
 }
 
 void Logger::Debug(const std::string& message) {
-	if (currentLevel <= LogLevel::DEBUG) {
-		Log(LogLevel::DEBUG, message);
+	if (currentLevel <= LogLevel::DEBUG_LEVEL) {
+		Log(LogLevel::DEBUG_LEVEL, message);
 	}
 }
 
 void Logger::Info(const std::string& message) {
-	if (currentLevel <= LogLevel::INFO) {
-		Log(LogLevel::INFO, message);
+	if (currentLevel <= LogLevel::INFO_LEVEL) {
+		Log(LogLevel::INFO_LEVEL, message);
 	}
 }
 
 void Logger::Warning(const std::string& message) {
-	if (currentLevel <= LogLevel::WARNING) {
-		Log(LogLevel::WARNING, message);
+	if (currentLevel <= LogLevel::WARNING_LEVEL) {
+		Log(LogLevel::WARNING_LEVEL, message);
 	}
 }
 
 void Logger::Error(const std::string& message) {
-	if (currentLevel <= LogLevel::ERROR) {
-		Log(LogLevel::ERROR, message);
+	if (currentLevel <= LogLevel::ERROR_LEVEL) {
+		Log(LogLevel::ERROR_LEVEL, message);
 	}
 }
 
@@ -80,10 +80,10 @@ void Logger::Log(LogLevel level, const std::string& message) {
 
 std::string Logger::LevelToString(LogLevel level) {
 	switch (level) {
-	case LogLevel::DEBUG: return "DEBUG";
-	case LogLevel::INFO: return "INFO";
-	case LogLevel::WARNING: return "WARNING";
-	case LogLevel::ERROR: return "ERROR";
+	case LogLevel::DEBUG_LEVEL: return "DEBUG";
+	case LogLevel::INFO_LEVEL: return "INFO";
+	case LogLevel::WARNING_LEVEL: return "WARNING";
+	case LogLevel::ERROR_LEVEL: return "ERROR";
 	default: return "UNKNOWN";
 	}
 }

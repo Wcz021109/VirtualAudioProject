@@ -62,6 +62,7 @@ public:
 		if (pManager) {
 			pManager->PopulateDeviceLists();
 		}
+		return S_OK;
 	} //DeviceRemoved
 
 	HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) override {
@@ -70,6 +71,7 @@ public:
 		if (pManager) {
 			pManager->PopulateDeviceLists();
 		}
+		return S_OK;
 	} //DefaultDeviceChanged
 
 	HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) override {
@@ -97,7 +99,6 @@ AudioDeviceManager::~AudioDeviceManager() {
 bool AudioDeviceManager::Initialize() {
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 	if (FAILED(hr)) {
-	std:
 		std::wcerr << L"COM initialize failed: " << _com_error(hr).ErrorMessage() << std::endl;
 		return false;
 	};
@@ -245,7 +246,7 @@ DeviceType AudioDeviceManager::ClassifyDevice(IMMDevice *pDevice, IPropertyStore
 	//  获取设备接口友好名称（更详细）
 	PROPVARIANT varInterfaceName;
 	PropVariantInit(&varInterfaceName);
-	HRESULT hr = pProps->GetValue(PKEY_Device_Interface_FriendlyName, &varInterfaceName);
+	HRESULT hr = pProps->GetValue(PKEY_DeviceInterface_FriendlyName, &varInterfaceName);
 
 	std::wstring interfaceName;
 	if (SUCCEEDED(hr) && varInterfaceName.vt == VT_LPWSTR) {

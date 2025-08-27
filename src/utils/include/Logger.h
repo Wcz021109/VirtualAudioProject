@@ -8,10 +8,10 @@
 
 //  日志级别枚举
 enum class LogLevel {
-	DEBUG,
-	INFO,
-	WARNING,
-	ERROR
+	DEBUG_LEVEL,
+	INFO_LEVEL,
+	WARNING_LEVEL,
+	ERROR_LEVEL
 };
 
 //  日志类声明

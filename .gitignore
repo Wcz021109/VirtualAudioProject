@@ -5,6 +5,7 @@ lib/
 
 # IDE files
 .idea/
+vs/
 *.user
 *.sln
 *.vcxproj*
